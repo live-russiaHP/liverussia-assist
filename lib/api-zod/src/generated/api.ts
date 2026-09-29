@@ -185,3 +185,32 @@ export const UpdateAccountAccessResponse = zod.object({
 })
 
 
+
+
+export const CreateKnowledgeBody = zod.object({
+  title: zod.string().min(2),
+  answer: zod.string().min(2),
+  category: zod.string().min(1),
+  tags: zod.array(zod.string()).default([]),
+  isPremium: zod.boolean().default(false),
+});
+
+export const CreateKnowledgeResponse = zod.object({
+  id: zod.number().int(),
+  title: zod.string(),
+  answer: zod.string(),
+  category: zod.string(),
+  tags: zod.array(zod.string()),
+  isPremium: zod.boolean(),
+  updatedAt: zod.string(),
+});
+
+export const UpdateKnowledgeBody = zod.object({
+  title: zod.string().min(2).optional(),
+  answer: zod.string().min(2).optional(),
+  category: zod.string().min(1).optional(),
+  tags: zod.array(zod.string()).optional(),
+  isPremium: zod.boolean().optional(),
+});
+
+export const UpdateKnowledgeResponse = CreateKnowledgeResponse;
