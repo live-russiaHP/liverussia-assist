@@ -1,0 +1,1 @@
+{"version":3,"file":"knowledgeItem.d.ts","sourceRoot":"","sources":["../../../src/generated/types/knowledgeItem.ts"],"names":[],"mappings":"AAAA;;;;;;GAMG;AAEH,MAAM,WAAW,aAAa;IAC5B,EAAE,EAAE,MAAM,CAAC;IACX,KAAK,EAAE,MAAM,CAAC;IACd,MAAM,EAAE,MAAM,CAAC;IACf,QAAQ,EAAE,MAAM,CAAC;IACjB,IAAI,EAAE,MAAM,EAAE,CAAC;IACf,SAAS,EAAE,OAAO,CAAC;IACnB,SAAS,EAAE,MAAM,CAAC;CACnB"}
