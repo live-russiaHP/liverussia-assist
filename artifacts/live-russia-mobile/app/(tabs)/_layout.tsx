@@ -1,5 +1,5 @@
 import React from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { Tabs } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
@@ -22,16 +22,9 @@ export default function TabLayout() {
         },
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) =>
-            <Feather name="grid" size={21} color={color} />,
-        }}
-      />
+      <Tabs.Screen name="index" options={{ title: 'Главная', tabBarIcon: ({ color }) => <Feather name="grid" size={21} color={color} /> }} />
       <Tabs.Screen name="search" options={{ title: 'Поиск', tabBarIcon: ({ color }) => <Feather name="search" size={21} color={color} /> }} />
-      <Tabs.Screen name="profile" options={{ title: 'Профиль', tabBarIcon: ({ color }) => <Feather name="user" size={21} color={color} /> }} />
+      <Tabs.Screen name="profile" options={{ title: 'Добавить', tabBarIcon: ({ color }) => <Feather name="plus-circle" size={21} color={color} /> }} />
     </Tabs>
   );
 }
