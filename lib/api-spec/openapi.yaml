@@ -1,17 +1,14 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
-  version: 0.1.0
-  description: Live Russia Assistant Hub API
+  version: 0.2.0
+  description: Live Russia Assistant Hub knowledge base API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
   - name: knowledge
-  - name: accounts
-  - name: admin
   - name: dashboard
 paths:
   /healthz:
@@ -30,276 +27,137 @@ paths:
     get:
       operationId: listKnowledge
       tags: [knowledge]
-      summary: Search the Live Russia knowledge base
+      summary: List knowledge rules
       parameters:
         - name: search
           in: query
           required: false
-          schema:
-            type: string
+          schema: { type: string }
         - name: category
           in: query
           required: false
-          schema:
-            type: string
+          schema: { type: string }
       responses:
         "200":
-          description: Matching knowledge entries
+          description: Knowledge rules
           content:
             application/json:
               schema:
                 type: array
-                items:
-                  $ref: "#/components/schemas/KnowledgeItem"
+                items: { $ref: "#/components/schemas/KnowledgeItem" }
+    post:
+      operationId: createKnowledge
+      tags: [knowledge]
+      summary: Create a knowledge rule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/KnowledgeCreate" }
+      responses:
+        "201":
+          description: Created rule
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KnowledgeItem" }
+        "400": { description: Invalid rule }
   /knowledge/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer }
     get:
       operationId: getKnowledge
       tags: [knowledge]
-      summary: Get a knowledge entry
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
+      summary: Get a knowledge rule
       responses:
         "200":
-          description: Knowledge entry
+          description: Knowledge rule
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/KnowledgeItem"
-        "404":
-          description: Knowledge entry not found
+              schema: { $ref: "#/components/schemas/KnowledgeItem" }
+        "404": { description: Rule not found }
+    patch:
+      operationId: updateKnowledge
+      tags: [knowledge]
+      summary: Update a knowledge rule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/KnowledgeUpdate" }
+      responses:
+        "200":
+          description: Updated rule
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KnowledgeItem" }
+        "404": { description: Rule not found }
+    delete:
+      operationId: deleteKnowledge
+      tags: [knowledge]
+      summary: Delete a knowledge rule
+      responses:
+        "204": { description: Rule deleted }
+        "404": { description: Rule not found }
   /dashboard/stats:
     get:
       operationId: getDashboardStats
       tags: [dashboard]
-      summary: Get dashboard summary
+      summary: Get knowledge base summary
       responses:
         "200":
           description: Dashboard summary
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/DashboardStats"
-  /accounts/register:
-    post:
-      operationId: registerAccount
-      tags: [accounts]
-      summary: Register an assistant account
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AccountRegistration"
-      responses:
-        "201":
-          description: Created account
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Account"
-        "400":
-          description: Invalid registration
-  /accounts/{accountNumber}:
-    get:
-      operationId: getAccount
-      tags: [accounts]
-      summary: Get an account by its static number
-      parameters:
-        - name: accountNumber
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Account
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Account"
-        "404":
-          description: Account not found
-    patch:
-      operationId: updateAccount
-      tags: [accounts]
-      summary: Update the current account
-      parameters:
-        - name: accountNumber
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AccountUpdate"
-      responses:
-        "200":
-          description: Updated account
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Account"
-        "404":
-          description: Account not found
-  /admin/accounts:
-    get:
-      operationId: listAccounts
-      tags: [admin]
-      summary: List all assistant accounts
-      responses:
-        "200":
-          description: Assistant accounts
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Account"
-  /admin/accounts/{accountNumber}/access:
-    patch:
-      operationId: updateAccountAccess
-      tags: [admin]
-      summary: Change Premium or account role
-      parameters:
-        - name: accountNumber
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AccountAccessUpdate"
-      responses:
-        "200":
-          description: Updated account
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Account"
-        "404":
-          description: Account not found
+              schema: { $ref: "#/components/schemas/DashboardStats" }
 components:
   schemas:
     HealthStatus:
       type: object
       properties:
-        status:
-          type: string
+        status: { type: string }
       required: [status]
     KnowledgeItem:
       type: object
       properties:
-        id:
-          type: integer
-        title:
-          type: string
-        answer:
-          type: string
-        category:
-          type: string
+        id: { type: integer }
+        title: { type: string }
+        answer: { type: string }
+        category: { type: string }
         tags:
           type: array
-          items:
-            type: string
-        isPremium:
-          type: boolean
-        updatedAt:
-          type: string
+          items: { type: string }
+        isPremium: { type: boolean }
+        updatedAt: { type: string }
       required: [id, title, answer, category, tags, isPremium, updatedAt]
-    Account:
+    KnowledgeCreate:
       type: object
       properties:
-        accountNumber:
-          type: string
-        displayName:
-          type: string
-        username:
-          type: string
-        role:
-          type: string
-          enum: [assistant, admin]
-        isPremium:
-          type: boolean
-        status:
-          type: string
-          enum: [active, blocked]
-        createdAt:
-          type: string
-        lastSeenAt:
-          type: string
-      required:
-        - accountNumber
-        - displayName
-        - username
-        - role
-        - isPremium
-        - status
-        - createdAt
-        - lastSeenAt
-    AccountRegistration:
+        title: { type: string, minLength: 2 }
+        answer: { type: string, minLength: 2 }
+        category: { type: string, minLength: 1 }
+        tags:
+          type: array
+          items: { type: string }
+        isPremium: { type: boolean }
+      required: [title, answer, category]
+    KnowledgeUpdate:
       type: object
       properties:
-        displayName:
-          type: string
-          minLength: 2
-        username:
-          type: string
-          minLength: 2
-        role:
-          type: string
-          enum: [assistant, admin]
-        adminCode:
-          type: string
-      required: [displayName, username]
-    AccountUpdate:
-      type: object
-      properties:
-        displayName:
-          type: string
-          minLength: 2
-        username:
-          type: string
-          minLength: 2
-    AccountAccessUpdate:
-      type: object
-      properties:
-        isPremium:
-          type: boolean
-        role:
-          type: string
-          enum: [assistant, admin]
-        status:
-          type: string
-          enum: [active, blocked]
+        title: { type: string, minLength: 2 }
+        answer: { type: string, minLength: 2 }
+        category: { type: string, minLength: 1 }
+        tags:
+          type: array
+          items: { type: string }
+        isPremium: { type: boolean }
     DashboardStats:
       type: object
       properties:
-        totalKnowledge:
-          type: integer
-        commandCount:
-          type: integer
-        priceCount:
-          type: integer
-        premiumCount:
-          type: integer
-        totalAccounts:
-          type: integer
-        activeAccounts:
-          type: integer
-      required:
-        - totalKnowledge
-        - commandCount
-        - priceCount
-        - premiumCount
-        - totalAccounts
-        - activeAccounts
+        totalKnowledge: { type: integer }
+        commandCount: { type: integer }
+        priceCount: { type: integer }
+        premiumCount: { type: integer }
+      required: [totalKnowledge, commandCount, priceCount, premiumCount]
