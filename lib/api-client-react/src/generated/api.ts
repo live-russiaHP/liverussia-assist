@@ -27,6 +27,8 @@ import type {
   DashboardStats,
   HealthStatus,
   KnowledgeItem,
+  KnowledgeCreate,
+  KnowledgeUpdate,
   ListKnowledgeParams
 } from './api.schemas';
 
@@ -792,3 +794,26 @@ export const useUpdateAccountAccess = <TError = ErrorType<void>,
       return useMutation(getUpdateAccountAccessMutationOptions(options));
     }
 
+
+
+export const createKnowledge = async (knowledgeCreate: KnowledgeCreate, options?: Parameters<typeof customFetch>[1]): Promise<KnowledgeItem> => {
+  return customFetch<KnowledgeItem>('/api/knowledge', {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...Object.fromEntries(new Headers(options?.headers).entries()) },
+    body: JSON.stringify(knowledgeCreate),
+  });
+};
+
+export const updateKnowledge = async (id: number, knowledgeUpdate: KnowledgeUpdate, options?: Parameters<typeof customFetch>[1]): Promise<KnowledgeItem> => {
+  return customFetch<KnowledgeItem>(/api/knowledge/ + id, {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...Object.fromEntries(new Headers(options?.headers).entries()) },
+    body: JSON.stringify(knowledgeUpdate),
+  });
+};
+
+export const deleteKnowledge = async (id: number, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+  await customFetch<void>(/api/knowledge/ + id, { ...options, method: 'DELETE' });
+};
