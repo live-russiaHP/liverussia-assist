@@ -11,6 +11,7 @@ on:
         options:
           - debug
           - release
+
   push:
     tags:
       - "v*"
@@ -22,9 +23,12 @@ jobs:
   build-release-apk:
     name: Build signed Android APK
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+
     env:
       EXPO_PUBLIC_DOMAIN: ${{ secrets.EXPO_PUBLIC_DOMAIN }}
       BUILD_TYPE: ${{ inputs.build_type || 'release' }}
+
       ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
       ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
       ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -35,14 +39,31 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+
           missing=()
-          [[ -n "${EXPO_PUBLIC_DOMAIN}" ]] || missing+=("EXPO_PUBLIC_DOMAIN")
-          if [[ "${BUILD_TYPE}" == "release" ]]; then
-            [[ -n "${ANDROID_KEYSTORE_BASE64}" ]] || missing+=("ANDROID_KEYSTORE_BASE64")
-            [[ -n "${ANDROID_KEY_ALIAS}" ]] || missing+=("ANDROID_KEY_ALIAS")
-            [[ -n "${ANDROID_KEYSTORE_PASSWORD}" ]] || missing+=("ANDROID_KEYSTORE_PASSWORD")
-            [[ -n "${ANDROID_KEY_PASSWORD}" ]] || missing+=("ANDROID_KEY_PASSWORD")
+
+          if [[ -z "${EXPO_PUBLIC_DOMAIN}" ]]; then
+            missing+=("EXPO_PUBLIC_DOMAIN")
           fi
+
+          if [[ "${BUILD_TYPE}" == "release" ]]; then
+            if [[ -z "${ANDROID_KEYSTORE_BASE64}" ]]; then
+              missing+=("ANDROID_KEYSTORE_BASE64")
+            fi
+
+            if [[ -z "${ANDROID_KEY_ALIAS}" ]]; then
+              missing+=("ANDROID_KEY_ALIAS")
+            fi
+
+            if [[ -z "${ANDROID_KEYSTORE_PASSWORD}" ]]; then
+              missing+=("ANDROID_KEYSTORE_PASSWORD")
+            fi
+
+            if [[ -z "${ANDROID_KEY_PASSWORD}" ]]; then
+              missing+=("ANDROID_KEY_PASSWORD")
+            fi
+          fi
+
           if (( ${#missing[@]} )); then
             printf 'Missing GitHub Secrets: %s\n' "${missing[*]}"
             exit 1
@@ -72,11 +93,21 @@ jobs:
         uses: android-actions/setup-android@v4
 
       - name: Install dependencies
+        shell: bash
         run: |
+          set -euo pipefail
+
           rm -f pnpm-lock.yaml
           pnpm install --no-frozen-lockfile
+
       - name: Generate native Android project
-        run: pnpm --filter @workspace/live-russia-mobile exec expo prebuild --platform android --no-install
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          pnpm --filter @workspace/live-russia-mobile exec expo prebuild \
+            --platform android \
+            --no-install
 
       - name: Configure release signing
         if: env.BUILD_TYPE == 'release'
@@ -84,7 +115,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          printf '%s' "${ANDROID_KEYSTORE_BASE64}" | base64 --decode > app/release.keystore
+
+          printf '%s' "${ANDROID_KEYSTORE_BASE64}" \
+            | base64 --decode > app/release.keystore
+
           {
             printf '\nMYAPP_UPLOAD_STORE_FILE=release.keystore\n'
             printf 'MYAPP_UPLOAD_KEY_ALIAS=%s\n' "${ANDROID_KEY_ALIAS}"
@@ -95,12 +129,26 @@ jobs:
       - name: Build Release APK
         if: env.BUILD_TYPE == 'release'
         working-directory: artifacts/live-russia-mobile/android
-        run: ./gradlew assembleRelease --no-daemon --stacktrace
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          ./gradlew assembleRelease \
+            --no-daemon \
+            --stacktrace \
+            --console=plain
 
       - name: Build Debug APK
         if: env.BUILD_TYPE == 'debug'
         working-directory: artifacts/live-russia-mobile/android
-        run: ./gradlew assembleDebug --no-daemon --stacktrace
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          ./gradlew assembleDebug \
+            --no-daemon \
+            --stacktrace \
+            --console=plain
 
       - name: Upload Release APK
         if: env.BUILD_TYPE == 'release'
