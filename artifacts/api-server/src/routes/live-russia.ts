@@ -8,6 +8,10 @@ import {
   GetAccountParams,
   GetKnowledgeParams,
   GetKnowledgeResponse,
+  CreateKnowledgeBody,
+  CreateKnowledgeResponse,
+  UpdateKnowledgeBody,
+  UpdateKnowledgeResponse,
   ListAccountsResponse,
   ListKnowledgeQueryParams,
   ListKnowledgeResponse,
@@ -146,6 +150,68 @@ router.get("/knowledge", async (req, res): Promise<void> => {
     .where(conditions.length ? and(...conditions) : undefined)
     .orderBy(desc(knowledgeItems.updatedAt));
   res.json(ListKnowledgeResponse.parse(rows.map(mapKnowledge)));
+});
+
+router.post("/knowledge", async (req, res): Promise<void> => {
+  await ensureSeed();
+  const parsed = CreateKnowledgeBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const [item] = await db
+    .insert(knowledgeItems)
+    .values({
+      title: parsed.data.title.trim(),
+      answer: parsed.data.answer.trim(),
+      category: parsed.data.category.trim(),
+      tags: parsed.data.tags.map((tag) => tag.trim()).filter(Boolean),
+      isPremium: parsed.data.isPremium,
+    })
+    .returning();
+  res.status(201).json(CreateKnowledgeResponse.parse(mapKnowledge(item)));
+});
+
+router.patch("/knowledge/:id", async (req, res): Promise<void> => {
+  await ensureSeed();
+  const params = GetKnowledgeParams.safeParse(req.params);
+  const body = UpdateKnowledgeBody.safeParse(req.body);
+  if (!params.success || !body.success) {
+    res.status(400).json({ error: "Invalid knowledge update" });
+    return;
+  }
+  const [item] = await db
+    .update(knowledgeItems)
+    .set({
+      ...(body.data.title === undefined ? {} : { title: body.data.title.trim() }),
+      ...(body.data.answer === undefined ? {} : { answer: body.data.answer.trim() }),
+      ...(body.data.category === undefined ? {} : { category: body.data.category.trim() }),
+      ...(body.data.tags === undefined ? {} : { tags: body.data.tags.map((tag) => tag.trim()).filter(Boolean) }),
+      ...(body.data.isPremium === undefined ? {} : { isPremium: body.data.isPremium }),
+      updatedAt: new Date(),
+    })
+    .where(eq(knowledgeItems.id, params.data.id))
+    .returning();
+  if (!item) {
+    res.status(404).json({ error: "Knowledge item not found" });
+    return;
+  }
+  res.json(UpdateKnowledgeResponse.parse(mapKnowledge(item)));
+});
+
+router.delete("/knowledge/:id", async (req, res): Promise<void> => {
+  await ensureSeed();
+  const parsed = GetKnowledgeParams.safeParse(req.params);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const [item] = await db.delete(knowledgeItems).where(eq(knowledgeItems.id, parsed.data.id)).returning({ id: knowledgeItems.id });
+  if (!item) {
+    res.status(404).json({ error: "Knowledge item not found" });
+    return;
+  }
+  res.status(204).send();
 });
 
 router.get("/knowledge/:id", async (req, res): Promise<void> => {
