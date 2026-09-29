@@ -3,12 +3,10 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useGetDashboardStats, useListKnowledge } from '@workspace/api-client-react';
 import { Screen, Section } from '@/components/Screen';
 import { Surface } from '@/components/Surface';
-import { useAccount } from '@/context/AccountContext';
 import { useColors } from '@/hooks/useColors';
 
 export default function HomeScreen() {
   const colors = useColors();
-  const { account } = useAccount();
   const stats = useGetDashboardStats();
   const knowledge = useListKnowledge();
   const featured = knowledge.data?.slice(0, 3) ?? [];
@@ -17,31 +15,30 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <View>
           <Text style={[styles.eyebrow, { color: colors.primary }]}>LIVE RUSSIA / HUB</Text>
-          <Text style={[styles.title, { color: colors.foreground }]}>Добрый день, {account?.displayName.split(' ')[0] ?? 'помощник'}</Text>
+          <Text style={[styles.title, { color: colors.foreground }]}>База правил</Text>
         </View>
         <View style={[styles.status, { backgroundColor: colors.secondary }]}><View style={[styles.dot, { backgroundColor: colors.primary }]} /><Text style={[styles.statusText, { color: colors.secondaryForeground }]}>онлайн</Text></View>
       </View>
       <Surface style={{ backgroundColor: colors.primary, borderColor: colors.primary, gap: 12 }}>
         <Text style={[styles.heroKicker, { color: colors.primaryForeground }]}>БЫСТРЫЙ ДОСТУП</Text>
-        <Text style={[styles.heroTitle, { color: colors.primaryForeground }]}>Найдите ответ за несколько секунд.</Text>
+        <Text style={[styles.heroTitle, { color: colors.primaryForeground }]}>Найдите нужное правило за несколько секунд.</Text>
         <Text style={[styles.heroText, { color: colors.primaryForeground }]}>Команды, цены и регламенты Live Russia в одном месте.</Text>
         <View style={styles.heroMeta}><Feather name="search" size={16} color={colors.primaryForeground} /><Text style={[styles.heroMetaText, { color: colors.primaryForeground }]}>Откройте вкладку «Поиск»</Text></View>
       </Surface>
       <Section>
-        <View style={styles.sectionHeader}><Text style={[styles.sectionTitle, { color: colors.foreground }]}>Сегодня в базе</Text><Text style={[styles.link, { color: colors.primary }]}>{stats.data?.totalKnowledge ?? '—'} материалов</Text></View>
+        <View style={styles.sectionHeader}><Text style={[styles.sectionTitle, { color: colors.foreground }]}>Сейчас в базе</Text><Text style={[styles.link, { color: colors.primary }]}>{stats.data?.totalKnowledge ?? '—'} материалов</Text></View>
         <View style={styles.metrics}>
-          <Metric label="Команды" value={stats.data?.commandCount ?? '—'} color={colors.primary} />
-          <Metric label="Цены" value={stats.data?.priceCount ?? '—'} color={colors.accent} />
-          <Metric label="Premium" value={account?.isPremium ? 'Доступен' : 'Нет'} color={colors.primary} />
+          <Metric label="Всего" value={stats.data?.totalKnowledge ?? '—'} color={colors.primary} />
+          <Metric label="Команды" value={stats.data?.commandCount ?? '—'} color={colors.accent} />
+          <Metric label="Цены" value={stats.data?.priceCount ?? '—'} color={colors.primary} />
         </View>
       </Section>
       <Section>
-        <View style={styles.sectionHeader}><Text style={[styles.sectionTitle, { color: colors.foreground }]}>Обновлённые ответы</Text><Feather name="arrow-up-right" size={18} color={colors.mutedForeground} /></View>
+        <View style={styles.sectionHeader}><Text style={[styles.sectionTitle, { color: colors.foreground }]}>Последние правила</Text><Feather name="arrow-up-right" size={18} color={colors.mutedForeground} /></View>
         {featured.map((item) => (
           <Surface key={item.id} style={styles.item}>
             <View style={[styles.iconBox, { backgroundColor: item.category === 'Цены' ? colors.accent : colors.secondary }]}><Feather name={item.category === 'Цены' ? 'tag' : 'terminal'} size={17} color={item.category === 'Цены' ? colors.accentForeground : colors.primary} /></View>
             <View style={styles.itemCopy}><Text style={[styles.itemTitle, { color: colors.foreground }]}>{item.title}</Text><Text numberOfLines={2} style={[styles.itemText, { color: colors.mutedForeground }]}>{item.answer}</Text></View>
-            {item.isPremium && <Feather name="star" size={16} color={colors.accent} />}
           </Surface>
         ))}
       </Section>
