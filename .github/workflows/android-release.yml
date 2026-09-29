@@ -1,1 +1,120 @@
+name: Android Release APK
 
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: APK type to build
+        required: true
+        default: debug
+        type: choice
+        options:
+          - debug
+          - release
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  build-release-apk:
+    name: Build signed Android APK
+    runs-on: ubuntu-latest
+    env:
+      EXPO_PUBLIC_DOMAIN: ${{ secrets.EXPO_PUBLIC_DOMAIN }}
+      BUILD_TYPE: ${{ inputs.build_type || 'release' }}
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+    steps:
+      - name: Check required release settings
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing=()
+          [[ -n "${EXPO_PUBLIC_DOMAIN}" ]] || missing+=("EXPO_PUBLIC_DOMAIN")
+          if [[ "${BUILD_TYPE}" == "release" ]]; then
+            [[ -n "${ANDROID_KEYSTORE_BASE64}" ]] || missing+=("ANDROID_KEYSTORE_BASE64")
+            [[ -n "${ANDROID_KEY_ALIAS}" ]] || missing+=("ANDROID_KEY_ALIAS")
+            [[ -n "${ANDROID_KEYSTORE_PASSWORD}" ]] || missing+=("ANDROID_KEYSTORE_PASSWORD")
+            [[ -n "${ANDROID_KEY_PASSWORD}" ]] || missing+=("ANDROID_KEY_PASSWORD")
+          fi
+          if (( ${#missing[@]} )); then
+            printf 'Missing GitHub Secrets: %s\n' "${missing[*]}"
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate native Android project
+        run: pnpm --filter @workspace/live-russia-mobile exec expo prebuild --platform android --no-install
+
+      - name: Configure release signing
+        if: env.BUILD_TYPE == 'release'
+        working-directory: artifacts/live-russia-mobile/android
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '%s' "${ANDROID_KEYSTORE_BASE64}" | base64 --decode > app/release.keystore
+          {
+            printf '\nMYAPP_UPLOAD_STORE_FILE=release.keystore\n'
+            printf 'MYAPP_UPLOAD_KEY_ALIAS=%s\n' "${ANDROID_KEY_ALIAS}"
+            printf 'MYAPP_UPLOAD_STORE_PASSWORD=%s\n' "${ANDROID_KEYSTORE_PASSWORD}"
+            printf 'MYAPP_UPLOAD_KEY_PASSWORD=%s\n' "${ANDROID_KEY_PASSWORD}"
+          } >> gradle.properties
+
+      - name: Build Release APK
+        if: env.BUILD_TYPE == 'release'
+        working-directory: artifacts/live-russia-mobile/android
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
+
+      - name: Build Debug APK
+        if: env.BUILD_TYPE == 'debug'
+        working-directory: artifacts/live-russia-mobile/android
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Upload Release APK
+        if: env.BUILD_TYPE == 'release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-russia-assistant-release-apk
+          path: artifacts/live-russia-mobile/android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload Debug APK
+        if: env.BUILD_TYPE == 'debug'
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-russia-assistant-debug-apk
+          path: artifacts/live-russia-mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30
