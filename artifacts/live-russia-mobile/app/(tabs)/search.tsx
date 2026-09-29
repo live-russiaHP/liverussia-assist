@@ -4,19 +4,17 @@ import { Feather } from '@expo/vector-icons';
 import { getListKnowledgeQueryKey, useListKnowledge } from '@workspace/api-client-react';
 import { Screen } from '@/components/Screen';
 import { Surface } from '@/components/Surface';
-import { useAccount } from '@/context/AccountContext';
 import { useColors } from '@/hooks/useColors';
 
 const categories = ['Все', 'Команды', 'Цены', 'Регламент', 'Premium'];
 
 export default function SearchScreen() {
   const colors = useColors();
-  const { account } = useAccount();
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('Все');
   const params = { search: search || undefined, category: category === 'Все' ? undefined : category };
   const query = useListKnowledge(params, { query: { staleTime: 15_000, queryKey: getListKnowledgeQueryKey(params) } });
-  const results = useMemo(() => (query.data ?? []).filter((item) => account?.isPremium || !item.isPremium), [account?.isPremium, query.data]);
+  const results = useMemo(() => query.data ?? [], [query.data]);
   return (
     <Screen>
       <View style={styles.heading}><Text style={[styles.eyebrow, { color: colors.primary }]}>БАЗА ЗНАНИЙ</Text><Text style={[styles.title, { color: colors.foreground }]}>Что нужно найти?</Text><Text style={[styles.subtitle, { color: colors.mutedForeground }]}>Ищите по команде, цене или формулировке вопроса.</Text></View>
