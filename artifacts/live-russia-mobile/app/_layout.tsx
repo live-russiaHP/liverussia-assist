@@ -26,7 +26,7 @@ if (!apiDomain) {
   );
 }
 
-setBaseUrl(https:// + apiDomain);
+setBaseUrl('https://' + apiDomain);
 
 SplashScreen.preventAutoHideAsync();
 
