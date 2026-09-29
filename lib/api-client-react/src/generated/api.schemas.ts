@@ -106,3 +106,20 @@ search?: string;
 category?: string;
 };
 
+
+
+export interface KnowledgeCreate {
+  title: string;
+  answer: string;
+  category: string;
+  tags?: string[];
+  isPremium?: boolean;
+}
+
+export interface KnowledgeUpdate {
+  title?: string;
+  answer?: string;
+  category?: string;
+  tags?: string[];
+  isPremium?: boolean;
+}
