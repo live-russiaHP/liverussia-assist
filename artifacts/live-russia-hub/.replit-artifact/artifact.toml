@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Live Russia Assistant Hub"
+description = "A searchable knowledge base and account hub for Live Russia assistants, with commands, prices, onboarding, account IDs, premium access, and administrator controls."
+version = "1.0.0"
+id = "artifacts/live-russia-hub"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20395
+
+[services.development]
+run = "pnpm --filter @workspace/live-russia-hub run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/live-russia-hub", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/live-russia-hub/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20395"
+BASE_PATH = "/"
