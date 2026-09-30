@@ -806,7 +806,7 @@ export const createKnowledge = async (knowledgeCreate: KnowledgeCreate, options?
 };
 
 export const updateKnowledge = async (id: number, knowledgeUpdate: KnowledgeUpdate, options?: Parameters<typeof customFetch>[1]): Promise<KnowledgeItem> => {
-  return customFetch<KnowledgeItem>(/api/knowledge/ + id, {
+  return customFetch<KnowledgeItem>(`/api/knowledge/${id}`, {
     ...options,
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...Object.fromEntries(new Headers(options?.headers).entries()) },
@@ -815,5 +815,5 @@ export const updateKnowledge = async (id: number, knowledgeUpdate: KnowledgeUpda
 };
 
 export const deleteKnowledge = async (id: number, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
-  await customFetch<void>(/api/knowledge/ + id, { ...options, method: 'DELETE' });
+  await customFetch<void>(`/api/knowledge/${id}`, { ...options, method: 'DELETE' });
 };
